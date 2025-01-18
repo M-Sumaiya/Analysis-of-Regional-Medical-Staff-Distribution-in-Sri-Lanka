@@ -1,0 +1,265 @@
+---
+title: "Case Study Codes"
+author: "KICADDS23.1F-001"
+date: "2024-03-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Uploading the Dataset
+```{r}
+data<-read.csv("C:/Users/msuma/OneDrive/Documents/NIBM/2nd Semester/Case Study/Health officers/data F.csv",header = TRUE)
+```
+```{r}
+colnames(data)
+```
+Structure of the dataset
+```{r}
+str(data)
+```
+Renaming Columns
+```{r}
+#renaming columns
+library(dplyr)
+data<- data %>%
+  rename('RDHS Division' = RDHS................Division,
+         'AGSD Medical Officers' = Administrative.Grade..Senior.and.Deputy..Medical.Officers,
+         'AGSD Non Medical Officers' = Administrative.Grade..Senior.and.Deputy..Non.Medical.Officers,
+         'Specialists / Consultant' = Specialists.Consultant..other.than.administrative.grade.,
+         'Hospital MO' = Hospital.Medical.Officers..D.M.O...M.O.I.C...S.H.O...S.M.O..in.OPD..etc..,
+         'MO in MOH,AMOH' = Medical.Officers.in.MOH.AMOH,
+         'School MO' = School.Medical.Officers,
+         'Malaria MO' = Medical.Officers..Malaria.,
+         'Leprosy MO' = Medical.Officers..Leprosy.,
+         'Filaria MO' = Medical.Officers..Filaria.,
+         'Principals/Sister Tutors ' = Principals.Sister.Tutors,
+         'Venereal Diseases MO' = Medical.Officers..Venereal.Diseases.,
+         'Tuberculosis MO' = Medical.Officers..Tuberculosis.,
+         'Maternal and Child Health MO' =Medical.Officers..Maternal.and.Child.Health.,
+         'Judicial MO' =Judicial.Medical.Officers,
+         'Blood Bank MO' =Medical.Officers..Blood.Bank.,
+         'Internee MO'=Internee.Medical.Officers..H.O..,
+         'P.G.I.M.Trainees'=P.G.I.M..Trainees...,
+         'Other MO'=Other.Medical.Officers,
+         'Medical Officers' = Medical.Officers.1,
+         'Total MO' = Total.Medical.Officers.2,
+         'Consultant DS'=Consultant.Dental.Surgeons,
+         'Regional DS'=Regional.Dental.Surgeons,
+         'Dental Surgeons'=Dental.Surgeons,
+         'Total DS' =Dental.Surgeons.3,
+         'Ward Masters/Sisters'=Ward.Masters..Sisters,
+         'PHNO'=Public.Health.Nursing.Officers,
+         'Supervising and Public PHNS' =Supervising.Public.Health.Nursing.Sisters.Public.Health.Nursing.Sisters,
+         'Pupil Nurses'=Pupil.Nurses,
+         'Total Nurses'=Total.Nurses,
+         'Supervising PHMW'=Supervising.Public.Health.Midwives,
+         'PHMW'=Public.Health.Midwives,
+         'Hospital Midwives'=Hospital.Midwives,
+         'Total MidWives'=Total.Mid.Wives)
+```
+
+
+```{r}
+data
+```
+
+
+```{r}
+#checking for duplicated data 
+duplicated(data)
+```
+```{r}
+#uploading the population dataset
+pop_data<-read.csv("C:/Users/msuma/OneDrive/Documents/NIBM/2nd Semester/Case Study/Health officers/Final population.csv",header = TRUE)
+```
+
+```{r}
+#renaming a column
+library(dplyr)
+
+pop_data <- pop_data %>%
+  rename(`RDHS Division` = RDHS................Division)
+pop_data
+```
+Merging the two datasets
+```{r}
+#merging the two datasets
+final_dataset<-merge(pop_data,data,by='RDHS Division')
+final_dataset
+```
+```{r}
+#examining the structure of the final dataset
+str(final_dataset)
+```
+Population bar graph
+```{r}
+
+library(RColorBrewer)
+
+# Create a gradient color palette with shades of blue
+blue_palette <- colorRampPalette(colors = c("darkblue", "lightblue", "green"))
+
+# Determine the number of unique RDHS Divisions
+num_divisions <- length(unique(final_dataset$`RDHS Division`))
+
+# Creating bar plot
+barplot(final_dataset$population, 
+        main = "Regional Population Distribution", 
+        col = blue_palette(num_divisions),
+        names.arg = final_dataset$`RDHS Division`,
+        las = 2,
+        cex.names = 0.76,
+        ylim = c(0,2500000))
+```
+plot to visualize the distribution of medical officers by type
+```{r}
+
+library(ggplot2)
+library(reshape2)
+
+
+# Melt the data for plotting
+melted_df <- melt(final_dataset[, c("RDHS Division", "Total MO", "Total DS", "Total Nurses")], id.vars = "RDHS Division")
+
+# Plot stacked bar plot
+ggplot(melted_df, aes(x = `RDHS Division`, y = value, fill = variable)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Medical Officer Distribution by Type",
+       x = "RDHS Division", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+Number of medical staff per 100,000 population
+```{r}
+
+#Number of Medical doctors
+N_MO <- (sum(final_dataset$`Total MO`)/sum(final_dataset$population,na.rm = TRUE))*100000
+N_MO
+#Number of nurses
+N_Nurses <-(sum(final_dataset$`Total Nurses`)/sum(final_dataset$population,na.rm = TRUE))*100000
+N_Nurses
+#Number of Dental surgeons
+N_DS <-(sum(final_dataset$`Total DS`)/sum(final_dataset$population,na.rm = TRUE))*100000
+N_DS
+#Number of Public health midwives
+N_MW <-(sum(final_dataset$PHMW)/sum(final_dataset$population,na.rm = TRUE))*100000
+N_MW
+```
+```{r}
+#summary of final dataset
+summary(final_dataset)
+```
+Correlation heatmap
+```{r}
+
+population_total_all <- final_dataset[, c("population", "Total MO", "Total MidWives", "Total Nurses", "Total DS")]
+
+# Calculating correlation matrix
+correlation_matrix_all <- cor(population_total_all)
+
+# Plotting the correlation heatmap
+library(ggplot2)
+library(reshape2)
+
+# Melt correlation matrix for visualization
+melted_corr_matrix_all <- melt(correlation_matrix_all)
+
+# Create heatmap with correlation values
+ggplot(data = melted_corr_matrix_all, aes(x = Var1, y = Var2, fill = value, label = round(value, 2))) +
+  geom_tile() +
+  geom_text(color = "black") +  # Add text labels
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1,1), name = "Correlation") +
+  labs(title = "Correlation Heatmap between Population and Health Staff", x = "Variables", y = "Variables")
+
+```
+```{r}
+#Number of Medical Officers
+library(readxl)
+RCBD_MO <- read_excel("C:/Users/msuma/OneDrive/Documents/NIBM/2nd Semester/Case Study/Health officers/RCBD datasets/RCBD MO.xlsx",col_types = c("text", "text", "numeric"))
+```
+
+Normality tests on medical officers
+```{r}
+
+shapiro.test(final_dataset$`Specialists / Consultant`)
+shapiro.test(final_dataset$`Hospital MO`)
+shapiro.test(final_dataset$`MO in MOH,AMOH`)
+shapiro.test(final_dataset$`School MO`)
+shapiro.test(final_dataset$`Malaria MO`)
+shapiro.test(final_dataset$`Filaria MO`)
+shapiro.test(final_dataset$`Leprosy MO`)
+shapiro.test(final_dataset$`Venereal Diseases MO`)
+shapiro.test(final_dataset$`Tuberculosis MO`)
+shapiro.test(final_dataset$Epidemiologists)
+shapiro.test(final_dataset$`Maternal and Child Health MO`)
+shapiro.test(final_dataset$`Judicial MO`)
+shapiro.test(final_dataset$`Blood Bank MO`)
+shapiro.test(final_dataset$`Internee MO`)
+shapiro.test(final_dataset$P.G.I.M.Trainees)
+shapiro.test(final_dataset$`Other MO`)
+```
+
+Fried Man test on medical officers
+```{r}
+library(agricolae)
+G<-friedman(RCBD_MO$Position,RCBD_MO$Region,RCBD_MO$Count)
+G
+```
+
+visualization of groups according to the distribution of medical officers
+```{r}
+plot(G)
+```
+```{r}
+#Number of Nurses
+library(readxl)
+RCBD_NS <- read_excel("C:/Users/msuma/OneDrive/Documents/NIBM/2nd Semester/Case Study/Health officers/RCBD datasets/RCBD NS.xlsx")
+```
+
+Normality test on nurses
+```{r}
+shapiro.test(final_dataset$Matrons)
+shapiro.test(final_dataset$`Ward Masters/Sisters`)
+shapiro.test(final_dataset$`Principals/Sister Tutors `)
+shapiro.test(final_dataset$Nursing.Officers)
+shapiro.test(final_dataset$PHNO)
+shapiro.test(final_dataset$`Supervising PHMW`)
+shapiro.test(final_dataset$`Pupil Nurses`)
+```
+
+Fried Man test on Nurses
+```{r}
+library(agricolae)
+H<-friedman(RCBD_NS$Position,RCBD_NS$Region,RCBD_NS$Count)
+H
+```
+visualization of groups according to the distribution of nurses
+```{r}
+plot(H)
+```
+```{r}
+library(readxl)
+RCBD_Dental <- read_excel("C:/Users/msuma/OneDrive/Documents/NIBM/2nd Semester/Case Study/Health officers/RCBD datasets/RCBD Dental.xlsx")
+```
+
+Normality test on dental surgeons
+```{r}
+shapiro.test(final_dataset$`Consultant DS`)
+shapiro.test(final_dataset$`Regional DS`)
+shapiro.test(final_dataset$`Dental Surgeons`)
+shapiro.test(final_dataset$P.G.I.M.Trainees..)
+```
+
+Fried Man test on Dental Surgeons
+```{r}
+library(agricolae)
+J<-friedman(RCBD_Dental$Position,RCBD_Dental$Region,RCBD_Dental$Count)
+J
+```
+Visualization of groups according to the distribution of dental surgeons
+```{r}
+plot(J)
+```
+
